@@ -35,11 +35,19 @@ function! s:OnEvent(job_id, data, event) dict
     call appendbufline(self.win_num, '$', str)
 endfunction
 
-let s:callbacks = {
-\ 'on_stdout': function('s:OnEvent'),
-\ 'on_stderr': function('s:OnEvent'),
-\ 'on_exit': function('s:OnEvent')
-\ }
+if has('nvim')
+    let s:callbacks = {
+    \ 'on_stdout': function('s:OnEvent'),
+    \ 'on_stderr': function('s:OnEvent'),
+    \ 'on_exit': function('s:OnEvent')
+    \ }
+else
+    let s:callbacks = {
+    \ 'out_cb': function('s:OnEvent'),
+    \ 'err_cb': function('s:OnEvent'),
+    \ 'close_cb': function('s:OnEvent')
+    \ }
+endif
 
 function run#GetWindow(cmd)
     for i in range(1, winnr('$'))
@@ -91,5 +99,9 @@ function! run#Run()
     let full_cmd = extend(cmd, [expand("%:p")])
     let win_num = run#GetWindow(full_cmd)
     let start_time = localtime()
-    let job = jobstart(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
+    if has('nvim')
+        let job = jobstart(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
+    else
+        let job = job_start(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
+    endif
 endfunction

@@ -13,6 +13,11 @@ function! s:OnEvent(job_id, data, event) dict
         let s:chunks = ['']
         let s:chunks[-1] .= a:data[0]
         call extend(s:chunks, a:data[1:])
+        if s:chunks[0] == ''
+            call remove(s:chunks, 0)
+        elseif s:chunks[-1] == ''
+            call remove(s:chunks, -1)
+        endif
         let the_data = s:chunks
         "let the_data = join(a:data)
         let str = the_data
@@ -23,7 +28,9 @@ function! s:OnEvent(job_id, data, event) dict
         let str = 'stderr: ' . the_data
     else
         "let str = 'exited ' . a:data
-        let str = 'exited '
+        let finished_time = localtime()
+        let run_time = finished_time - self.start_time
+        let str = '[Done] exited with code=' . string(a:data) . ' in '  . run_time . ' seconds'
     endif
     call appendbufline(self.win_num, '$', str)
 endfunction
@@ -34,41 +41,42 @@ let s:callbacks = {
 \ 'on_exit': function('s:OnEvent')
 \ }
 
-function run#GetWindow()
+function run#GetWindow(cmd)
     for i in range(1, winnr('$'))
         if bufname(winbufnr(i)) == '_run_output_'
             let win_num = i
             break
         endif
     endfor
+    let first_line = '[Running] ' . join(a:cmd)
     if exists('win_num')
-        echo win_num
         execute win_num . 'wincmd w'
         silent normal ggdG
+        call setline(1, first_line)
         wincmd p
     else
         keepalt belowright vsplit _run_output_
-        setlocal filetype=run_output buftype=nofile bufhidden=wipe
+        setlocal filetype=run_output buftype=nofile bufhidden=wipe noswapfile nowrap cursorline modifiable nospell
         let win_num = bufnr('%')
-        echo win_num
+        call setline(1, first_line)
         wincmd p
     endif
     return win_num
 endfunction
 
 let s:run_command = {
-  \'javascript': 'node',
-  \'typescript': 'node',
-  \'php': 'php',
-  \'python': 'python3',
-  \'zsh': 'zsh',
-  \'sh': 'sh',
-  \'bash': 'bash',
-  \'julia': 'julia',
-  \'r': 'Rscript',
-  \'ruby': 'ruby',
-  \'swift': 'swift',
-  \'lua': 'lua',
+  \'javascript': ['node'],
+  \'typescript': ['node'],
+  \'php': ['php'],
+  \'python' : ['python3', '-u'],
+  \'zsh': [ 'zsh'],
+  \'sh': [ 'sh'],
+  \'bash': [ 'bash'],
+  \'julia': [ 'julia'],
+  \'r': [ 'Rscript'],
+  \'ruby': [ 'ruby'],
+  \'swift': [ 'swift'],
+  \'lua': [ 'lua'],
   \}
 
 let s:run_command = extend(s:run_command, g:run_command)
@@ -79,8 +87,9 @@ function run#GetCommand()
 endfunction
 
 function! run#Run()
-    let win_num = run#GetWindow()
     let cmd = run#GetCommand()
-    let full_cmd = [cmd, expand("%")]
-    let job = jobstart(full_cmd, extend({'win_num': win_num}, s:callbacks))
+    let full_cmd = extend(cmd, [expand("%:p")])
+    let win_num = run#GetWindow(full_cmd)
+    let start_time = localtime()
+    let job = jobstart(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
 endfunction

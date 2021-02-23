@@ -95,7 +95,7 @@ function run#GetCommand()
 endfunction
 
 function! run#Run()
-    let cmd = run#GetCommand()
+    let cmd = deepcopy(run#GetCommand())
     let full_cmd = extend(cmd, [expand("%:p")])
     let win_num = run#GetWindow(full_cmd)
     let start_time = localtime()

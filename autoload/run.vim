@@ -13,19 +13,22 @@ function! s:OnEvent(job_id, data, event) dict
         let s:chunks = ['']
         let s:chunks[-1] .= a:data[0]
         call extend(s:chunks, a:data[1:])
-        if s:chunks[0] == ''
-            call remove(s:chunks, 0)
-        elseif s:chunks[-1] == ''
-            call remove(s:chunks, -1)
-        endif
+        "if s:chunks[0] == ''
+        "    call remove(s:chunks, 0)
+        "elseif s:chunks[-1] == ''
+        "    call remove(s:chunks, -1)
+        "endif
+        call filter(s:chunks, '!empty(v:val)')
         let the_data = s:chunks
         "let the_data = join(a:data)
         let str = the_data
+        echomsg str
     elseif a:event == 'stderr'
         let the_data = join(a:data)
+        caddexpr a:data
         if the_data == '' | return | endif
         call appendbufline(self.win_num, '$', '')
-        let str = 'stderr: ' . the_data
+        let str = 'stderr: check the quickfix window for errors'
     else
         "let str = 'exited ' . a:data
         let finished_time = localtime()
@@ -50,26 +53,27 @@ else
 endif
 
 function run#GetWindow(cmd)
-    for i in range(1, winnr('$'))
-        if bufname(winbufnr(i)) == '_run_output_'
-            let win_num = i
-            break
-        endif
-    endfor
     let first_line = '[Running] ' . join(a:cmd)
-    if exists('win_num')
-        execute win_num . 'wincmd w'
-        silent normal ggdG
+
+    let buf_num = bufnr('_run_output_')
+    if buf_num == -1
+        keepalt belowright split _run_output_
+        exec 'resize ' . string(&lines - &lines / 1.618)
+        setlocal filetype=run_output buftype=nofile bufhidden=wipe noswapfile nowrap cursorline modifiable nospell
+        let buf_num = bufnr('%')
         call setline(1, first_line)
         wincmd p
     else
-        keepalt belowright vsplit _run_output_
-        setlocal filetype=run_output buftype=nofile bufhidden=wipe noswapfile nowrap cursorline modifiable nospell
-        let win_num = bufnr('%')
-        call setline(1, first_line)
-        wincmd p
+        let buffer_name = bufname(buf_num)
+        "execute("belowright split " . buffer_name)
+        "exec 'resize ' . string(&lines - &lines / 1.618)
+        call deletebufline(buffer_name, 1, '$')
+        "call appendbufline(buffer_name, 1, first_line)
+        call setbufline(buffer_name, 1, first_line)
+        "wincmd p
     endif
-    return win_num
+
+    return buf_num
 endfunction
 
 let s:run_command = {

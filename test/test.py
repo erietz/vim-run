@@ -1,4 +1,4 @@
-#!/usr/bin/envpython3
+#!/usr/bin/env python3
 
 from time import sleep
 

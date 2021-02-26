@@ -26,6 +26,7 @@ function! s:OnEvent(job_id, data, event) dict
     elseif a:event == 'stderr'
         let the_data = join(a:data)
         caddexpr a:data
+        cwindow
         if the_data == '' | return | endif
         call appendbufline(self.win_num, '$', '')
         let str = 'stderr: check the quickfix window for errors'
@@ -34,6 +35,7 @@ function! s:OnEvent(job_id, data, event) dict
         let finished_time = localtime()
         let run_time = finished_time - self.start_time
         let str = '[Done] exited with code=' . string(a:data) . ' in '  . run_time . ' seconds'
+        cwindow
     endif
     call appendbufline(self.win_num, '$', str)
 endfunction
@@ -54,12 +56,14 @@ endif
 
 function run#GetWindow(cmd)
     let first_line = '[Running] ' . join(a:cmd)
+    let error_format = &errorformat
 
     let buf_num = bufnr('_run_output_')
     if buf_num == -1
         keepalt belowright split _run_output_
         exec 'resize ' . string(&lines - &lines / 1.618)
         setlocal filetype=run_output buftype=nofile bufhidden=wipe noswapfile nowrap cursorline modifiable nospell
+        let &errorformat=error_format
         let buf_num = bufnr('%')
         call setline(1, first_line)
         wincmd p
@@ -99,6 +103,7 @@ function run#GetCommand()
 endfunction
 
 function! run#Run()
+    cexpr ''
     let cmd = deepcopy(run#GetCommand())
     let full_cmd = extend(cmd, [expand("%:p")])
     let win_num = run#GetWindow(full_cmd)

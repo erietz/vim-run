@@ -22,7 +22,7 @@ function! s:OnEvent(job_id, data, event) dict
         let the_data = s:chunks
         "let the_data = join(a:data)
         let str = the_data
-        echomsg str
+        "echomsg str
     elseif a:event == 'stderr'
         let the_data = join(a:data)
         caddexpr a:data

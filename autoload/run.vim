@@ -95,7 +95,9 @@ let s:run_command = {
   \'lua': [ 'lua'],
   \}
 
-let s:run_command = extend(s:run_command, g:run_command)
+if exists('g:run_command')
+    let s:run_command = extend(s:run_command, g:run_command)
+endif
 
 function run#GetCommand()
     let cmd = get(s:run_command, &ft, '')
@@ -108,9 +110,10 @@ function! run#Run()
     let full_cmd = extend(cmd, [expand("%:p")])
     let win_num = run#GetWindow(full_cmd)
     let start_time = localtime()
-    if has('nvim')
-        let job = jobstart(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
-    else
-        let job = job_start(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
-    endif
+    let g:run_running_job = jobstart(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
 endfunction
+
+function run#RunStop()
+    call jobstop(g:run_running_job)
+endfunction
+

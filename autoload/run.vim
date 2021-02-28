@@ -5,18 +5,18 @@ endif
 let g:run_autoloaded = 1
 
 let s:run_command = {
-  \'javascript': ['node'],
-  \'typescript': ['node'],
-  \'php': ['php'],
-  \'python' : ['python3', '-u'],
-  \'zsh': [ 'zsh'],
-  \'sh': [ 'sh'],
-  \'bash': [ 'bash'],
-  \'julia': [ 'julia'],
-  \'r': [ 'Rscript'],
-  \'ruby': [ 'ruby'],
-  \'swift': [ 'swift'],
-  \'lua': [ 'lua'],
+  \'javascript': 'node',
+  \'typescript': 'node',
+  \'php': 'php',
+  \'python': 'python3 -u',
+  \'zsh':  'zsh',
+  \'sh':  'sh',
+  \'bash':  'bash',
+  \'julia':  'julia',
+  \'r':  'Rscript',
+  \'ruby':  'ruby',
+  \'swift':  'swift',
+  \'lua':  'lua',
   \}
 
 if exists('g:run_command')
@@ -71,7 +71,7 @@ let s:callbacks = {
 \ }
 
 function run#get_output_buffer(cmd)
-    let first_line = '[Running] ' . join(a:cmd)
+    let first_line = '[Running] ' . a:cmd
     let error_format = &errorformat
 
     let buf_num = bufnr('_run_output_')
@@ -98,8 +98,8 @@ endfunction
 
 function! run#run_file_in_output_buffer()
     cexpr ''
-    let cmd = deepcopy(run#get_command())
-    let full_cmd = extend(cmd, [expand("%:p")])
+    let cmd = run#get_command()
+    let full_cmd = cmd . ' ' . expand("%:p")
     let win_num = run#get_output_buffer(full_cmd)
     let start_time = localtime()
     let g:run_running_job = jobstart(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))

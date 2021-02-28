@@ -4,7 +4,7 @@ endif
 
 let g:run_autoloaded = 1
 
-function! s:OnEvent(job_id, data, event) dict
+function run#on_event(job_id, data, event) dict
     "let output_string = join(a:data)
     if a:event == 'stdout'
         " TODO: data arrives in inconsistant order and results in
@@ -40,21 +40,13 @@ function! s:OnEvent(job_id, data, event) dict
     call appendbufline(self.win_num, '$', str)
 endfunction
 
-if has('nvim')
-    let s:callbacks = {
-    \ 'on_stdout': function('s:OnEvent'),
-    \ 'on_stderr': function('s:OnEvent'),
-    \ 'on_exit': function('s:OnEvent')
-    \ }
-else
-    let s:callbacks = {
-    \ 'out_cb': function('s:OnEvent'),
-    \ 'err_cb': function('s:OnEvent'),
-    \ 'close_cb': function('s:OnEvent')
-    \ }
-endif
+let s:callbacks = {
+\ 'on_stdout': function('run#on_event'),
+\ 'on_stderr': function('run#on_event'),
+\ 'on_exit': function('run#on_event')
+\ }
 
-function run#GetWindow(cmd)
+function run#get_output_buffer(cmd)
     let first_line = '[Running] ' . join(a:cmd)
     let error_format = &errorformat
 
@@ -62,7 +54,7 @@ function run#GetWindow(cmd)
     if buf_num == -1
         keepalt belowright split _run_output_
         exec 'resize ' . string(&lines - &lines / 1.618)
-        setlocal filetype=run_output buftype=nofile bufhidden=wipe noswapfile nowrap cursorline modifiable nospell
+        setlocal filetype=run_output buftype=nofile noswapfile nowrap cursorline modifiable nospell
         let &errorformat=error_format
         let buf_num = bufnr('%')
         call setline(1, first_line)
@@ -99,21 +91,21 @@ if exists('g:run_command')
     let s:run_command = extend(s:run_command, g:run_command)
 endif
 
-function run#GetCommand()
+function run#get_command()
     let cmd = get(s:run_command, &ft, '')
     return cmd
 endfunction
 
-function! run#Run()
+function! run#run_file_in_output_buffer()
     cexpr ''
-    let cmd = deepcopy(run#GetCommand())
+    let cmd = deepcopy(run#get_command())
     let full_cmd = extend(cmd, [expand("%:p")])
-    let win_num = run#GetWindow(full_cmd)
+    let win_num = run#get_output_buffer(full_cmd)
     let start_time = localtime()
     let g:run_running_job = jobstart(full_cmd, extend({'win_num': win_num, 'start_time': start_time}, s:callbacks))
 endfunction
 
-function run#RunStop()
+function run#run_stop_job()
     call jobstop(g:run_running_job)
 endfunction
 

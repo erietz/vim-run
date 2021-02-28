@@ -4,6 +4,30 @@ endif
 
 let g:run_autoloaded = 1
 
+let s:run_command = {
+  \'javascript': ['node'],
+  \'typescript': ['node'],
+  \'php': ['php'],
+  \'python' : ['python3', '-u'],
+  \'zsh': [ 'zsh'],
+  \'sh': [ 'sh'],
+  \'bash': [ 'bash'],
+  \'julia': [ 'julia'],
+  \'r': [ 'Rscript'],
+  \'ruby': [ 'ruby'],
+  \'swift': [ 'swift'],
+  \'lua': [ 'lua'],
+  \}
+
+if exists('g:run_command')
+    let s:run_command = extend(s:run_command, g:run_command)
+endif
+
+function run#get_command()
+    let cmd = get(s:run_command, &ft, '')
+    return cmd
+endfunction
+
 function run#on_event(job_id, data, event) dict
     "let output_string = join(a:data)
     if a:event == 'stdout'
@@ -70,30 +94,6 @@ function run#get_output_buffer(cmd)
     endif
 
     return buf_num
-endfunction
-
-let s:run_command = {
-  \'javascript': ['node'],
-  \'typescript': ['node'],
-  \'php': ['php'],
-  \'python' : ['python3', '-u'],
-  \'zsh': [ 'zsh'],
-  \'sh': [ 'sh'],
-  \'bash': [ 'bash'],
-  \'julia': [ 'julia'],
-  \'r': [ 'Rscript'],
-  \'ruby': [ 'ruby'],
-  \'swift': [ 'swift'],
-  \'lua': [ 'lua'],
-  \}
-
-if exists('g:run_command')
-    let s:run_command = extend(s:run_command, g:run_command)
-endif
-
-function run#get_command()
-    let cmd = get(s:run_command, &ft, '')
-    return cmd
 endfunction
 
 function! run#run_file_in_output_buffer()

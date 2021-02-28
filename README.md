@@ -1,3 +1,6 @@
+# OBSOLETE!!!
+
+Use [vim-terminator](https://github.com/erietz/vim-terminator)
 # Features
 
 - Run your current file (asynchronously) in view the output in a scratch buffer
